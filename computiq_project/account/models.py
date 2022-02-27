@@ -3,7 +3,6 @@ from django.db import models
 from keyring import set_password
 from al_ajr.models import Entity
 from django.contrib.auth.models import UserManager, AbstractUser
-import uuid
 
 
 class CustomUserManger(UserManager):
@@ -27,6 +26,20 @@ class CustomUserManger(UserManager):
         return user
 
 
+    def create_superuser(self, email, password):
+        if not email:
+            raise ValueError('user must have email')
+
+        user = self.model(
+            email=self.normalize_email(email),
+        )
+        user.set_password(password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
+
+
     def __str__(self):
         return self.username
     
@@ -34,10 +47,17 @@ class CustomUserManger(UserManager):
 # Create your models here.
 class User(Entity, AbstractUser):
 
-    username = models.CharField(("name"), max_length=50, unique=True)
+    username = models.CharField(("name"), max_length=255, unique=True)
     email = models.EmailField(('email'), unique=True)
-    field = models.CharField(('field'), max_length=50)
-    rating = models.DecimalField('rating', decimal_places=1, max_digits=10, null=True, blank=True)
+    field = models.CharField(('field'), max_length=255, choices=[
+        ("FreeLancer", "FreeLancer"),
+        ("User", "User")
+    ])
+    rating = models.DecimalField('rating', decimal_places=1,
+                                 max_digits=10,
+                                 null=True,
+                                 blank=True,
+                                 default=0)
     state = models.CharField('states', max_length=255, choices=[
         ("دهوك", "دهوك"),
         ("اربيل", "اربيل"),
@@ -64,12 +84,3 @@ class User(Entity, AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = CustomUserManger()
-
-
-    # A property that get the avg rating of all the requests that the user
-    # have done
-    # TODO link the user table with the quests table and bases on that relation get the rating
-    # @property
-    def get_rating(self):
-        for i in range(4):
-            print(i)

@@ -1,8 +1,7 @@
-from turtle import st
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from ninja import Schema
-from al_ajr.schemas import UUIDSchema
+from common.schemas import UUIDSchema, AccountOut
 from django.contrib.auth import get_user_model
 from pydantic import EmailStr, Field
 
@@ -41,13 +40,6 @@ class AccountCreate(Schema):
                 return 400, {"detail": "email already used"}
             except Http404:
                 return None
-
-
-class AccountOut(UUIDSchema):
-    username: str
-    email: EmailStr
-    state: str
-    field: str
 
 
 class TokenOut(Schema):

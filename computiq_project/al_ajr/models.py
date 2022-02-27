@@ -1,7 +1,6 @@
-import email
 from django.db import models
 import uuid
-from django.http import request
+from django.core.validators import MaxValueValidator, MinValueValidator
 # Create your models here.
 
 class Entity(models.Model):
@@ -21,17 +20,28 @@ class Request(Entity):
     A request model to store the request that are made between
     custemers and freelancers
     """
-    user = models.ForeignKey("account.User", related_name='request', null=True, blank=True,
-                             on_delete=models.CASCADE)
-    requester_id = models.ForeignKey("account.User", verbose_name="custmer_id",
-                                     on_delete=models.CASCADE, related_name='requester_id')
-    receiver_id = models.ForeignKey("account.User", verbose_name="freelancer_id",
-                                     on_delete=models.CASCADE, related_name='receiver_id')
+    requester = models.ForeignKey("account.User", verbose_name="custmer_id",
+                                     on_delete=models.CASCADE,
+                                     related_name='requester_id')
+    receiver = models.ForeignKey("account.User", verbose_name="freelancer_id",
+                                     on_delete=models.CASCADE,
+                                     related_name='receiver_id',
+                                     blank=True,
+                                     null=True)
     price = models.DecimalField('price', decimal_places=3, max_digits=10)
     title = models.CharField(('title'), max_length=100)
     detail = models.CharField('details', max_length=2000)
-    is_processed = models.BooleanField('is processed')
-    is_done = models.BooleanField('is done')
+    rating = models.DecimalField("free lancer rating", decimal_places=1, max_digits=2,
+                                  blank=True,
+                                  null=True,
+                                  default=0,
+                                  validators=[MaxValueValidator(5.0), MinValueValidator(0.0)])
+    status = models.CharField("status", max_length=255, choices=[
+        ("NEW", "NEW"),
+        ("PROCESSING", "PROCESSING"),
+        ("DONE", "DONE"),
+        ("DELETED", "DELETED")
+    ])
 
 
 class Skill(Entity):
@@ -48,8 +58,3 @@ class Message(Entity):
     receiver = models.ForeignKey("account.User", verbose_name=("receiver"), related_name="receiver",
                                   on_delete=models.DO_NOTHING)
     content = models.CharField('message', max_length=255)
-
-
-# Probably won't need a join table becuase we're using django
-# class Rating(Entity):
-#    pass

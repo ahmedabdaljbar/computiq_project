@@ -1,11 +1,9 @@
-from dataclasses import field
-import email
-from os import stat
+from django.shortcuts import get_object_or_404
 from ninja import Router
-from account.authorization import get_tokens_for_user
+from account.authorization import GlobalAuth, get_tokens_for_user
 from account.schemas import AccountCreate, AuthOut, SigninSchema
 from django.contrib.auth import get_user_model, authenticate
-from al_ajr.schemas import MessageOut
+from common.schemas import MessageOut, AccountOut
 
 User = get_user_model()
 
@@ -16,23 +14,23 @@ log_controller = Router(tags=['log'])
     400: MessageOut,
     201: AuthOut,
 })
-def signup(request, signnup_payload: AccountCreate):
-    if signnup_payload.password1 != signnup_payload.password2:
+def signup(request, signup_payload: AccountCreate):
+    if signup_payload.password1 != signup_payload.password2:
         return 400, {'detail': 'passwords dont match'}
     
-    if not signnup_payload.check():
-        if not signnup_payload.unique_check():
+    if not signup_payload.check():
+        if not signup_payload.unique_check():
             user = User.objects.create_user(
-                username= signnup_payload.username,
-                email=signnup_payload.email,
-                password=signnup_payload.password1,
-                field=signnup_payload.field,
-                state=signnup_payload.state
+                username= signup_payload.username,
+                email=signup_payload.email,
+                password=signup_payload.password1,
+                field=signup_payload.field,
+                state=signup_payload.state
             )
         else:
-            return signnup_payload.unique_check()
+            return signup_payload.unique_check()
     else:
-        return signnup_payload.check()
+        return signup_payload.check()
 
     token = get_tokens_for_user(user)
 
@@ -58,3 +56,18 @@ def signin(request, signin_payload: SigninSchema):
         'token': token,
         'account': user
     }
+    
+
+@log_controller.get('', auth=GlobalAuth(), response=AccountOut)
+def me(request):
+    return get_object_or_404(User, id=request.auth['pk'])
+
+
+
+#TODO
+"""
+@log_controller.put("/rating")
+def rating(request):
+    user = get_object_or_404(User, username="string")
+    return user.get_rating()
+"""

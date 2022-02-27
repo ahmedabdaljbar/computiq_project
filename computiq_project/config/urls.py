@@ -17,11 +17,14 @@ from django.contrib import admin
 from django.urls import path
 from ninja import NinjaAPI
 from account.controller import log_controller
+from al_ajr.controller import request_controller, message_controller
 
 api = NinjaAPI()
 
-
 api.add_router("logs", log_controller)
+api.add_router("messages", message_controller)
+api.add_router("requests", request_controller)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
