@@ -91,3 +91,27 @@ def accept_request(request, request_id: UUID4):
     request_.save()
 
     return 200, {"detail": "تم قبول الطلب بنجاح"}
+
+
+@request_controller.delete("/request/{request_id}/delete", auth=GlobalAuth(),response=MessageOut)
+def delete_request(request, request_id: UUID4):
+
+    request_ = get_object_or_404(Request, id=request_id)
+    request_.delete()
+    return 200, {"detail": "تم حذف الطلب بنجاح"}
+
+
+#TODO
+"""@request_controller.put("/request/{request_id}/finish", auth=GlobalAuth(), response={
+    200: MessageOut,
+    400: MessageOut
+})
+def finish_request(request, request_id: UUID4, rating: float):
+
+    request_ = get_object_or_404(Request, id=request_id)
+    freelancer = request_.receiver
+    request.rating = rating
+    request.status = "DONE"
+    freelancer.rating=get_rating()
+    return 200, {"detail": ""}"""
+    
