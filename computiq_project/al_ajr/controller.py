@@ -48,9 +48,11 @@ creates a request
 def create_request(request, payload: RequestCreate):
 
     user = get_object_or_404(User, id=request.auth["pk"])
+    user.requests_asked += 1
     request_ = Request.objects.create(**payload.dict(),
-                                        requester_id=user,
+                                        requester_id=user.id,
                                         status="NEW")
+    user.save()
     return 200, {"detail": "request created successfully"}
 
 
@@ -59,11 +61,14 @@ updates a specifc request by id
 """
 @request_controller.put("/request/{request_id}/update", auth=GlobalAuth(), response={
     200: MessageOut,
+    400: MessageOut,
     401: MessageOut})
 def update_request(request, request_id: UUID4, payload: RequestUpdate):
 
     # Make sure the the requester is the one who can do changes to the request
     user = get_object_or_404(User, id=request.auth["pk"])
+    if user.field != "FreeLancer":
+        return 400, {"detail": "Only free lancers can take requests"}
 
     requester_id = get_object_or_404(Request, id=request_id)
     requester_id = requester_id.requester
@@ -88,6 +93,8 @@ def accept_request(request, request_id: UUID4):
     request_ = get_object_or_404(Request, id=request_id)
     request_.receiver = user
     request_.status = "PROCESSING"
+    user.requests_accepted += 1
+    user.save()
     request_.save()
 
     return 200, {"detail": "تم قبول الطلب بنجاح"}
@@ -101,8 +108,8 @@ def delete_request(request, request_id: UUID4):
     return 200, {"detail": "تم حذف الطلب بنجاح"}
 
 
-#TODO
-"""@request_controller.put("/request/{request_id}/finish", auth=GlobalAuth(), response={
+
+@request_controller.put("/request/{request_id}/finish", auth=GlobalAuth(), response={
     200: MessageOut,
     400: MessageOut
 })
@@ -110,8 +117,8 @@ def finish_request(request, request_id: UUID4, rating: float):
 
     request_ = get_object_or_404(Request, id=request_id)
     freelancer = request_.receiver
-    request.rating = rating
     request.status = "DONE"
-    freelancer.rating=get_rating()
-    return 200, {"detail": ""}"""
-    
+    freelancer.total_rating += rating
+    freelancer.rating=freelancer.get_rating()
+
+    return 200, {"detail": "تم اكمال الطلب"}

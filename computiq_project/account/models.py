@@ -78,9 +78,17 @@ class User(Entity, AbstractUser):
         ("ذي قار", "ذي قار"),
         ("البصره", "البصره"),
     ])
-    # TODO get the width * height from the frontend
+    total_rating = models.DecimalField(("total rating"),
+                                                 max_digits=6,
+                                                 decimal_places=1,)
+    requests_accepted = models.IntegerField(("number of requests"))
+    requests_asked = models.IntegerField("requests asked number")
+
     image = models.ImageField('image', null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = CustomUserManger()
+    
+    def get_rating(self):
+        return (self.total_rating / self.requests_accepted)

@@ -31,11 +31,6 @@ class Request(Entity):
     price = models.DecimalField('price', decimal_places=3, max_digits=10)
     title = models.CharField(('title'), max_length=100)
     detail = models.CharField('details', max_length=2000)
-    rating = models.DecimalField("free lancer rating", decimal_places=1, max_digits=2,
-                                  blank=True,
-                                  null=True,
-                                  default=0,
-                                  validators=[MaxValueValidator(5.0), MinValueValidator(0.0)])
     status = models.CharField("status", max_length=255, choices=[
         ("NEW", "NEW"),
         ("PROCESSING", "PROCESSING"),
