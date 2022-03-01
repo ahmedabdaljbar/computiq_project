@@ -22,3 +22,9 @@ class RequestOut(UUIDSchema, RequestCreate):
     receiver: AccountOut = None
     rating: float
     status: str
+
+
+class MessageOutClass(UUIDSchema):
+    sender: AccountOut
+    receiver: AccountOut
+    content: str

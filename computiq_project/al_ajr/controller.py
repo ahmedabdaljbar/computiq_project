@@ -1,21 +1,23 @@
-from ast import Global
 from http.client import PROCESSING
+from pyexpat.errors import messages
 from django.contrib.auth import get_user_model
+from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from typing import List
 from pydantic import UUID4
 
 from common.schemas import MessageOut
-from al_ajr.models import Request
+from al_ajr.models import Message, Request
 from account.models import User
-from al_ajr.schemas import  RequestCreate, RequestOut, RequestUpdate
+from al_ajr.schemas import  MessageOutClass, RequestCreate, RequestOut, RequestUpdate
 from account.authorization import GlobalAuth
 
 User = get_user_model()
 
 request_controller = Router(tags=['Requests'])
 message_controller = Router(tags=['Messges'])
+
 
 """
 this endpoint get you all of the requests
@@ -108,7 +110,6 @@ def delete_request(request, request_id: UUID4):
     return 200, {"detail": "تم حذف الطلب بنجاح"}
 
 
-
 @request_controller.put("/request/{request_id}/finish", auth=GlobalAuth(), response={
     200: MessageOut,
     400: MessageOut
@@ -122,3 +123,28 @@ def finish_request(request, request_id: UUID4, rating: float):
     freelancer.rating=freelancer.get_rating()
 
     return 200, {"detail": "تم اكمال الطلب"}
+
+
+@message_controller.post("/message/{name}", auth=GlobalAuth())
+def message_user(request, name: str, message: str):
+
+    sender = get_object_or_404(User, id=request.auth["pk"])
+    receiver = get_object_or_404(User, name=name)
+
+    message_ = Message.objects.create(sender=sender, receiver=receiver, content=message)
+    message_.save()
+    return 200
+
+
+@message_controller.get("/messages/{name}", auth=GlobalAuth(), response={
+    400:MessageOut,
+    200:MessageOutClass
+    }
+)
+def get_all_messages(request, name: str):
+    
+    sender = get_object_or_404(User, id=request.auth["pk"])
+    receiver = get_object_or_404(User, name=name)
+    messages = Message.objects.filter(sender=sender, receiver=receiver).all()
+
+    return messages

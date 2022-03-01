@@ -6,17 +6,17 @@ from django.contrib.auth.models import UserManager, AbstractUser
 
 
 class CustomUserManger(UserManager):
-    def get_by_username(self, username):
-        case_insensitive_username_field = '{}__iexact'.format(self.model.USERNAME_FIELD)
+    def get_by_username(self, name):
+        case_insensitive_username_field = '{}__iexact'.format(
+            self.model.USERNAME_FIELD)
         return self.get(**{case_insensitive_username_field: username})
 
-
-    def create_user(self, username, email, password, field, state):
+    def create_user(self, name, email, password, field, state):
         user = self.model(
-            email = self.normalize_email(email)
+            email=self.normalize_email(email)
         )
 
-        user.username = username
+        user.name = name
         user.email = email
         user.set_password(password)
         user.field = field
@@ -24,7 +24,6 @@ class CustomUserManger(UserManager):
         user.save(using=self._db)
 
         return user
-
 
     def create_superuser(self, email, password):
         if not email:
@@ -39,15 +38,15 @@ class CustomUserManger(UserManager):
         user.save(using=self._db)
         return user
 
-
     def __str__(self):
-        return self.username
-    
+        return self.name
+
 
 # Create your models here.
 class User(Entity, AbstractUser):
 
-    username = models.CharField(("name"), max_length=255, unique=True)
+    username = models.NOT_PROVIDED
+    name = models.CharField(max_length=255, null=True)
     email = models.EmailField(('email'), unique=True)
     field = models.CharField(('field'), max_length=255, choices=[
         ("FreeLancer", "FreeLancer"),
@@ -72,23 +71,23 @@ class User(Entity, AbstractUser):
         ("بابل", "بابل"),
         ("النجف", "النجف"),
         ("كربلاء", "كربلاء"),
-        ("ميسان" , "ميسان"),
+        ("ميسان", "ميسان"),
         ("الديوانيه", "الديوانيه"),
         ("المثنى", "المثنى"),
         ("ذي قار", "ذي قار"),
         ("البصره", "البصره"),
     ])
     total_rating = models.DecimalField(("total rating"),
-                                                 max_digits=6,
-                                                 decimal_places=1,)
-    requests_accepted = models.IntegerField(("number of requests"))
-    requests_asked = models.IntegerField("requests asked number")
+                                       max_digits=6,
+                                       decimal_places=1, default=0)
+    requests_accepted = models.IntegerField("number of requests", default=0)
+    requests_asked = models.IntegerField("requests asked number", default=0)
 
     image = models.ImageField('image', null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = CustomUserManger()
-    
+
     def get_rating(self):
         return (self.total_rating / self.requests_accepted)

@@ -8,7 +8,7 @@ from pydantic import EmailStr, Field
 User = get_user_model()
 
 class AccountCreate(Schema):
-    username: str
+    name: str
     email: EmailStr
     password1: str = Field(min_length=8)
     password2: str

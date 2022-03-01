@@ -17,11 +17,11 @@ log_controller = Router(tags=['log'])
 def signup(request, signup_payload: AccountCreate):
     if signup_payload.password1 != signup_payload.password2:
         return 400, {'detail': 'passwords dont match'}
-    
+
     if not signup_payload.check():
         if not signup_payload.unique_check():
             user = User.objects.create_user(
-                username= signup_payload.username,
+                name=signup_payload.name,
                 email=signup_payload.email,
                 password=signup_payload.password1,
                 field=signup_payload.field,
@@ -45,29 +45,20 @@ def signup(request, signup_payload: AccountCreate):
     404: MessageOut
 })
 def signin(request, signin_payload: SigninSchema):
-    user = authenticate(email=signin_payload.email, password=signin_payload.password)
+    user = authenticate(email=signin_payload.email,
+                        password=signin_payload.password)
 
     if not user:
         return 404, {'detail': 'user does not exist'}
-    
+
     token = get_tokens_for_user(user)
 
     return {
         'token': token,
         'account': user
     }
-    
+
 
 @log_controller.get('', auth=GlobalAuth(), response=AccountOut)
 def me(request):
     return get_object_or_404(User, id=request.auth['pk'])
-
-
-
-#TODO
-"""
-@log_controller.put("/rating")
-def rating(request):
-    user = get_object_or_404(User, username="string")
-    return user.get_rating()
-"""
