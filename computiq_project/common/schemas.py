@@ -10,6 +10,7 @@ class MessageOut(Schema):
     detail: str
 
 
+
 class AccountOut(UUIDSchema):
     name: str
     email: EmailStr

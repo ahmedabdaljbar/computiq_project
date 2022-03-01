@@ -1,5 +1,8 @@
+from decimal import Decimal
 from http.client import PROCESSING
 from pyexpat.errors import messages
+from unicodedata import decimal
+from webbrowser import get
 from django.contrib.auth import get_user_model
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
@@ -69,8 +72,6 @@ def update_request(request, request_id: UUID4, payload: RequestUpdate):
 
     # Make sure the the requester is the one who can do changes to the request
     user = get_object_or_404(User, id=request.auth["pk"])
-    if user.field != "FreeLancer":
-        return 400, {"detail": "Only free lancers can take requests"}
 
     requester_id = get_object_or_404(Request, id=request_id)
     requester_id = requester_id.requester
@@ -79,8 +80,13 @@ def update_request(request, request_id: UUID4, payload: RequestUpdate):
         return 401, {"detail": "غير مصرح بالتغير"}
     
     request_ = get_object_or_404(Request, id=request_id)
+
+    if request_.status != "NEW":
+        return 400, {"detail": "cant update a request while a freelancer is working on it"}
+
     for attr, value in payload.dict().items():
         setattr(request_, attr, value)
+    request_.status = "EDITED"
     request_.save()
     return 200, {"detail": "تم تحديث الطلب بنجاح"}
 
@@ -88,10 +94,17 @@ def update_request(request, request_id: UUID4, payload: RequestUpdate):
 """
 allow the free lancer to take on a request
 """
-@request_controller.put("/request/{request_id}/accept", auth=GlobalAuth())
+@request_controller.put("/request/{request_id}/accept", auth=GlobalAuth(), response={
+    200: MessageOut,
+    400: MessageOut
+})
 def accept_request(request, request_id: UUID4):
-
+    
     user = get_object_or_404(User, id=request.auth["pk"])
+
+    if user.field != "FreeLancer":
+        return 400, {"detail": "Only free lancers can take requests"}
+
     request_ = get_object_or_404(Request, id=request_id)
     request_.receiver = user
     request_.status = "PROCESSING"
@@ -114,37 +127,42 @@ def delete_request(request, request_id: UUID4):
     200: MessageOut,
     400: MessageOut
 })
-def finish_request(request, request_id: UUID4, rating: float):
+def finish_request(request, request_id: UUID4, rating: Decimal):
 
     request_ = get_object_or_404(Request, id=request_id)
+    if request_.status == "DONE":
+        return 400, {"detail": "cant rate an already finshed request"}
     freelancer = request_.receiver
-    request.status = "DONE"
+    request_.status = "DONE"
     freelancer.total_rating += rating
     freelancer.rating=freelancer.get_rating()
+    request_.save()
+    freelancer.save()
 
     return 200, {"detail": "تم اكمال الطلب"}
 
 
-@message_controller.post("/message/{name}", auth=GlobalAuth())
-def message_user(request, name: str, message: str):
+@message_controller.post("/message/{receiver_id}", auth=GlobalAuth())
+def send_message(request, receiver_id: UUID4, message: str):
 
     sender = get_object_or_404(User, id=request.auth["pk"])
-    receiver = get_object_or_404(User, name=name)
+    receiver = get_object_or_404(User, id=receiver_id)
 
     message_ = Message.objects.create(sender=sender, receiver=receiver, content=message)
     message_.save()
     return 200
 
 
-@message_controller.get("/messages/{name}", auth=GlobalAuth(), response={
-    400:MessageOut,
-    200:MessageOutClass
-    }
-)
-def get_all_messages(request, name: str):
-    
-    sender = get_object_or_404(User, id=request.auth["pk"])
-    receiver = get_object_or_404(User, name=name)
-    messages = Message.objects.filter(sender=sender, receiver=receiver).all()
+@message_controller.get("/get_message/{sender_id}", auth=GlobalAuth(), response={
+    200: List[MessageOutClass],
+    400: MessageOut
+})
+def get_message(request, sender_id: UUID4):
 
-    return messages
+    user = get_object_or_404(User, id=request.auth["pk"])
+    sender = get_object_or_404(User, id=sender_id)
+    messages = Message.objects.all().filter(sender=sender, receiver=user)
+    if not messages:
+        return 400, {"detail": "No messages were received"}
+        
+    return 200, messages

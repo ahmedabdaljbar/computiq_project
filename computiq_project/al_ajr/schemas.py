@@ -20,11 +20,10 @@ class RequestUpdate(RequestCreate):
 class RequestOut(UUIDSchema, RequestCreate):
     requester: AccountOut
     receiver: AccountOut = None
-    rating: float
     status: str
 
 
 class MessageOutClass(UUIDSchema):
+    id: UUID4
     sender: AccountOut
-    receiver: AccountOut
     content: str

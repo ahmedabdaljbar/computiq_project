@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from ninja import Router
+from pydantic import UUID4
 from account.authorization import GlobalAuth, get_tokens_for_user
 from account.schemas import AccountCreate, AuthOut, SigninSchema
 from django.contrib.auth import get_user_model, authenticate
@@ -62,3 +63,13 @@ def signin(request, signin_payload: SigninSchema):
 @log_controller.get('', auth=GlobalAuth(), response=AccountOut)
 def me(request):
     return get_object_or_404(User, id=request.auth['pk'])
+
+
+@log_controller.get("/user/{user_id}", auth=GlobalAuth(), response={
+    200: AccountOut,
+    400: MessageOut
+})
+def get_user(request, user_id: UUID4):
+    id_user = get_object_or_404(User, id=user_id)
+
+    return 200, id_user

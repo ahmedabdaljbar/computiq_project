@@ -35,7 +35,8 @@ class Request(Entity):
         ("NEW", "NEW"),
         ("PROCESSING", "PROCESSING"),
         ("DONE", "DONE"),
-        ("DELETED", "DELETED")
+        ("DELETED", "DELETED"),
+        ("EDITED", "EDITED")
     ])
 
 
