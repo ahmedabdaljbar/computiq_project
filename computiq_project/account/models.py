@@ -6,7 +6,11 @@ from django.contrib.auth.models import UserManager, AbstractUser
 
 
 class CustomUserManger(UserManager):
+<<<<<<< HEAD
     def get_by_username(self, name):
+=======
+    def get_by_username(self, username):
+>>>>>>> cb3791989b2f428f29fe9d9a426d0847979f3f6c
         case_insensitive_username_field = '{}__iexact'.format(
             self.model.USERNAME_FIELD)
         return self.get(**{case_insensitive_username_field: username})
@@ -39,7 +43,11 @@ class CustomUserManger(UserManager):
         return user
 
     def __str__(self):
+<<<<<<< HEAD
         return self.name
+=======
+        return self.username
+>>>>>>> cb3791989b2f428f29fe9d9a426d0847979f3f6c
 
 
 # Create your models here.

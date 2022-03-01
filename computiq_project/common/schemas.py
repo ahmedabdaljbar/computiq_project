@@ -10,9 +10,8 @@ class MessageOut(Schema):
     detail: str
 
 
-
 class AccountOut(UUIDSchema):
-    username: str
+    name: str
     email: EmailStr
     rating: float = None
     state: str

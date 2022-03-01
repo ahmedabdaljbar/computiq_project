@@ -9,11 +9,13 @@ User = get_user_model()
 
 TIME_DELTA = timedelta(days=30)
 
+
 class GlobalAuth(HttpBearer):
     @staticmethod
     def authenticate(request, token):
         try:
-            user_pk = jwt.decode(token=token, key=settings.SECRET_KEY, algorithms=['HS256'])
+            user_pk = jwt.decode(
+                token=token, key=settings.SECRET_KEY, algorithms=['HS256'])
         except JWTError:
             return None
         if user_pk:
@@ -21,7 +23,8 @@ class GlobalAuth(HttpBearer):
 
 
 def get_tokens_for_user(user):
-    token = jwt.encode({'pk': str(user.pk)}, key=settings.SECRET_KEY, algorithm='HS256')
+    token = jwt.encode({'pk': str(user.pk)},
+                       key=settings.SECRET_KEY, algorithm='HS256')
     return {
         'access': str(token),
     }

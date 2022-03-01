@@ -7,6 +7,7 @@ from pydantic import EmailStr, Field
 
 User = get_user_model()
 
+
 class AccountCreate(Schema):
     name: str
     email: EmailStr
@@ -14,9 +15,9 @@ class AccountCreate(Schema):
     password2: str
     state: str
     field: str
-    
+
     def check(self):
-        if not self.username:
+        if not self.name:
             return 400, {"detail": "Please enter your username"}
         elif not self.email:
             return 400, {"detail": "Please enter your email"}
@@ -25,14 +26,13 @@ class AccountCreate(Schema):
         elif not self.state:
             return 400, {"detail": "Please chose your state"}
 
-
     def unique_check(self):
         """
         If the name does not exist then it will check for 
         the email if it's already exists
         """
         try:
-            user_buffer = get_object_or_404(User, username=self.username)
+            user_buffer = get_object_or_404(User, name=self.name)
             return 400, {"detail": "username already used"}
         except Http404:
             try:
@@ -57,7 +57,7 @@ class SigninSchema(Schema):
 
 
 class AccountUpdate(Schema):
-    username: str
+    name: str
 
 
 class ChangePasswordSchema(Schema):
